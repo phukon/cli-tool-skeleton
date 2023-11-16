@@ -8,8 +8,5 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "tool": {
-    "port": 9999
-  }
+  "license": "ISC"
 }
