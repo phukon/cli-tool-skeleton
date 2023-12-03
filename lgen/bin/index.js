@@ -5,6 +5,7 @@ import {start} from '../src/commands/start.js'
 import {getConfig} from '../src/config/config-mgr.js'
 import createLogger from '../src/logger.js';
 
+
 const logger = createLogger('bin');
 
 try {
@@ -30,3 +31,6 @@ function usage() {
   ${chalk.greenBright('--start')}\tStarts the app
   ${chalk.greenBright('--build')}\tBuilds the app`)
 }
+
+// ---------
+import { select } from '@inquirer/prompts';
