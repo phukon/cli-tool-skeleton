@@ -22,7 +22,7 @@ const fetchData = async () => {
     }
     licenses = ghdata.map((entry) => ({
       name: entry.spdx_id,
-      value: entry.spdx_id,
+      value: entry.key,
       description: entry.name,
     }));
     isSuccess = true;
@@ -95,30 +95,32 @@ const askOptions = async () => {
           entries.date = dateAnswer || new Date().getUTCFullYear();
         }
       }
-    }
 
-    console.log(`License: ${entries.license}\nName: ${entries.fullname}`);
-    const check = await confirm({ message: 'Continue?' });
-    if (check) {
-      fetch(URL)
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          fs.writeFile('LICENSE', data[0].name, (err) => {
-            if (err) {
-              console.error('Error writing to file:', err);
-            } else {
-              console.log('Data has been written to');
+      console.log(`License: ${entries.license}\nName: ${entries.fullname}`);
+      const check = await confirm({ message: 'Continue?' });
+      if (check) {
+        let fffx = `${URL}/${entries.license}`;
+        console.log(fffx);
+        fetch(fffx)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
             }
+            return response.json();
+          })
+          .then((data) => {
+            fs.writeFile('LICENSE', data.body, (err) => {
+              if (err) {
+                console.error('Error writing to file:', err);
+              } else {
+                console.log('Data has been written to');
+              }
+            });
+          })
+          .catch((error) => {
+            console.error('Error fetching data:', error);
           });
-        })
-        .catch((error) => {
-          console.error('Error fetching data:', error);
-        });
+      }
     }
   } catch (error) {
     console.error('Error occurred:', error);
