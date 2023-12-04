@@ -15,16 +15,22 @@ Import assertion are experimental. Therfore I tried loading the JSON from the fi
   import schema from './schema.json' assert { type: 'json' };
 */
 
-const loadJSON = (path) =>
-  JSON.parse(fs.readFileSync(new URL(path, import.meta.url)));
+// const loadJSON = (path) =>
+//   JSON.parse(fs.readFileSync(new URL(path, import.meta.url)));
 
-const schema = loadJSON('./schema.json');
+const schema = {
+  properties: {
+    license: {
+      type: 'string',
+    },
+  },
+};
 
 export async function getConfig() {
   const result = configLoader.search(process.cwd());
 
   if (!result) {
-    logger.warning('Could not find configuration, using default');
+    logger.warning('Could not find a license field!');
     return { port: 1234 };
   } else {
     const isValid = ajv.validate(schema, result.config);

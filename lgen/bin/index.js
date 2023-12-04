@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import arg from 'arg'
+import yargs from 'yargs'
 import chalk from 'chalk'
 import {start} from '../src/commands/start.js'
 import {getConfig} from '../src/config/config-mgr.js'
@@ -10,8 +10,9 @@ const logger = createLogger('bin');
 
 try {
   const args = arg({
-    '--start': Boolean,
-    '--build': Boolean,
+    '-auto': Boolean,
+    '-n': String,
+    '-d': Number
   })
 
   logger.debug('Received args', args);
@@ -31,6 +32,3 @@ function usage() {
   ${chalk.greenBright('--start')}\tStarts the app
   ${chalk.greenBright('--build')}\tBuilds the app`)
 }
-
-// ---------
-import { select } from '@inquirer/prompts';

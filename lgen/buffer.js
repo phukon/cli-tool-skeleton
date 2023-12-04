@@ -1,5 +1,6 @@
 import select, { Separator } from '@inquirer/select';
 import input from '@inquirer/input';
+import pc from "picocolors"
 
 const URL = 'https://api.github.com/licenses';
 const entries = {};
@@ -17,9 +18,9 @@ const fetchData = async () => {
     for (const e of data) {
       ghdata.push(e);
     }
-    licenses = ghdata.map(entry => ({
+    licenses = ghdata.map((entry) => ({
       name: entry.spdx_id,
-      value: entry.key,
+      value: entry.spdx_id,
       description: entry.name,
     }));
     isSuccess = true;
@@ -39,7 +40,8 @@ const askOptions = async () => {
           {
             name: 'Auto',
             value: 'auto',
-            description: 'Automatically generate a license using values from the package.json',
+            description:
+              'Automatically generate a license using values from the package.json',
           },
           {
             name: 'Custom',
@@ -50,17 +52,20 @@ const askOptions = async () => {
       });
 
       if (answer === 'auto') {
-        console.log('You selected Auto. Generating license...');
+        console.log(
+            pc.bold(pc.blue('You selected Auto. Reading package.json...')
+            )
+          
+        );
         // Perform tasks related to the 'Auto' option
       } else if (answer === 'custom') {
         const lcs = await select({
           message: 'Select license',
           choices: [...licenses, new Separator()],
         });
-        console.log('You selected:', lcs);
         entries.license = lcs;
 
-        if (lcs === 'bsd-2-clause' || lcs === 'bsd-3-clause' || lcs === 'mit') {
+        if (lcs === 'BSD-2-Clause' || lcs === 'BSD-3-Clause' || lcs === 'MIT') {
           const nameAnswer = await input({ message: 'Enter your name' });
           if (typeof nameAnswer !== 'string' || nameAnswer.trim().length < 1) {
             console.log('Invalid name. Please enter a valid name.');
@@ -74,7 +79,9 @@ const askOptions = async () => {
           do {
             dateAnswer = await input({ message: 'Enter the date' });
             if (!dateRegex.test(dateAnswer)) {
-              console.log('Invalid date. Please enter a valid date in YYYY format.');
+              console.log(
+                'Invalid date. Please enter a valid date in YYYY format.'
+              );
             }
           } while (!dateRegex.test(dateAnswer));
           entries.date = dateAnswer || new Date().getUTCFullYear();
