@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import yargs from 'yargs'
+import arg from 'arg'
 import chalk from 'chalk'
 import {start} from '../src/commands/start.js'
 import {getConfig} from '../src/config/config-mgr.js'
@@ -10,9 +10,8 @@ const logger = createLogger('bin');
 
 try {
   const args = arg({
-    '-auto': Boolean,
-    '-n': String,
-    '-d': Number
+    '--start': Boolean,
+    '--build': Boolean,
   })
 
   logger.debug('Received args', args);

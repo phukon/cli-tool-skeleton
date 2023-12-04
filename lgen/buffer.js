@@ -1,6 +1,8 @@
 import select, { Separator } from '@inquirer/select';
 import input from '@inquirer/input';
-import pc from "picocolors"
+import confirm from '@inquirer/confirm';
+import pc from 'picocolors';
+import fs from 'fs';
 
 const URL = 'https://api.github.com/licenses';
 const entries = {};
@@ -53,9 +55,7 @@ const askOptions = async () => {
 
       if (answer === 'auto') {
         console.log(
-            pc.bold(pc.blue('You selected Auto. Reading package.json...')
-            )
-          
+          pc.bold(pc.blue('You selected Auto. Reading package.json...'))
         );
         // Perform tasks related to the 'Auto' option
       } else if (answer === 'custom') {
@@ -66,11 +66,19 @@ const askOptions = async () => {
         entries.license = lcs;
 
         if (lcs === 'BSD-2-Clause' || lcs === 'BSD-3-Clause' || lcs === 'MIT') {
-          const nameAnswer = await input({ message: 'Enter your name' });
-          if (typeof nameAnswer !== 'string' || nameAnswer.trim().length < 1) {
-            console.log('Invalid name. Please enter a valid name.');
-            return;
-          }
+          let nameAnswer;
+          do {
+            nameAnswer = await input({ message: 'Enter your name' });
+            if (
+              typeof nameAnswer !== 'string' ||
+              nameAnswer.trim().length < 1
+            ) {
+              console.log('Invalid name. Please enter a valid name.');
+            }
+          } while (
+            typeof nameAnswer !== 'string' ||
+            nameAnswer.trim().length < 1
+          );
 
           entries.fullname = nameAnswer;
 
@@ -89,7 +97,29 @@ const askOptions = async () => {
       }
     }
 
-    console.log(entries);
+    console.log(`License: ${entries.license}\nName: ${entries.fullname}`);
+    const check = await confirm({ message: 'Continue?' });
+    if (check) {
+      fetch(URL)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          fs.writeFile('LICENSE', data[0].name, (err) => {
+            if (err) {
+              console.error('Error writing to file:', err);
+            } else {
+              console.log('Data has been written to');
+            }
+          });
+        })
+        .catch((error) => {
+          console.error('Error fetching data:', error);
+        });
+    }
   } catch (error) {
     console.error('Error occurred:', error);
   }

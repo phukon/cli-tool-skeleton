@@ -1,35 +1,24 @@
 import { Command } from "commander";
+import { getConfig } from "./src/config/config-mgr";
+
+
 
 
 const program = new Command();
+var name
 program
-  .name('string-util')
-  .description('CLI to some JavaScript string utilities')
-  .version('0.8.0');
-
-program.command('split')
-  .description('Split a string into substrings and display as an array')
-  .argument('<string>', 'string to split')
-  .option('--first', 'display just the first substring')
-  .option('-s, --separator <char>', 'separator character', ',')
-  .action((str, options) => {
-    const limit = options.first ? 1 : undefined;
-    console.log(str.split(options.separator, limit));
+  .name('\n\nauto-lgen')
+  .description('generate licenses for your project blazing fast')
+  .version('0.8.0')
+  .description('Automatically generate a license using the package.json file')
+  .option('-n, --name <string>', 'separator character', '')
+  .action((options) => {
+    name = options.name;
   });
 
 program.parse();
 
+console.log(name)
 
-//-----
-program
-  .option('-d, --debug', 'output extra debugging')
-  .option('-s, --small', 'small pizza size')
-  .option('-p, --pizza-type <type>', 'flavour of pizza');
-
-program.parse(process.argv);
-
-const options = program.opts();
-if (options.debug) console.log(options);
-console.log('pizza details:');
-if (options.small) console.log('- small pizza size');
-if (options.pizzaType) console.log(`- ${options.pizzaType}`);
+const config = await getConfig()
+console.log(config)

@@ -5,7 +5,8 @@ import betterAjvErrors from 'better-ajv-errors';
 import createLogger from '../logger.js';
 
 const ajv = new Ajv();
-const configLoader = cosmiconfigSync('tool');
+const licenseLoader = cosmiconfigSync('license');
+const nameLoader = cosmiconfigSync('author');
 const logger = createLogger('config: mgr');
 
 /*
@@ -15,32 +16,31 @@ Import assertion are experimental. Therfore I tried loading the JSON from the fi
   import schema from './schema.json' assert { type: 'json' };
 */
 
-// const loadJSON = (path) =>
-//   JSON.parse(fs.readFileSync(new URL(path, import.meta.url)));
+const loadJSON = (path) =>
+  JSON.parse(fs.readFileSync(new URL(path, import.meta.url)));
 
-const schema = {
-  properties: {
-    license: {
-      type: 'string',
-    },
-  },
-};
+const schema = loadJSON('./schema.json');
 
 export async function getConfig() {
-  const result = configLoader.search(process.cwd());
+  const lsc = licenseLoader.search(process.cwd());
+  const auth = nameLoader.search(process.cwd())
 
-  if (!result) {
-    logger.warning('Could not find a license field!');
-    return { port: 1234 };
+  if (!lsc) {
+    logger.warning('Please have a valid license field.');
+     process.exit(1)
+  } else if (auth.config.trim().length < 1) {
+    logger.warning('No author defined in package.json');
+    process.exit(1)
   } else {
-    const isValid = ajv.validate(schema, result.config);
-    if (!isValid) {
+    const isLValid = ajv.validate(schema, lsc.config);
+    const isAValid = ajv.validate(schema, auth.config);
+    if (!isLValid || !isAValid) {
       logger.warning('Invalid configuration was supplied');
       console.log();
-      console.log(betterAjvErrors(schema, result.config, ajv.errors));
+      console.log(betterAjvErrors(schema, `${lsc.config} ${auth.config}`, ajv.errors));
       process.exit(1);
     }
-    logger.log('Found configuration', result.config);
-    return result.config;
+    logger.highlight(`Found\n  license: ${lsc.config} and author: ${auth.config}`);
+    return lsc.config;
   }
 }
