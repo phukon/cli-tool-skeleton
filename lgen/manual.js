@@ -1,11 +1,8 @@
-import { Command } from "commander";
-import { getConfig } from "./src/config/config-mgr";
-
-
-
+import { Command } from 'commander';
+import { autogen } from './src/generate/gen.js';
 
 const program = new Command();
-var name
+var name;
 program
   .name('\n\nauto-lgen')
   .description('generate licenses for your project blazing fast')
@@ -18,7 +15,15 @@ program
 
 program.parse();
 
-console.log(name)
+const generateLicense = async () => {
+  const autogenValues = await autogen({}, false);
 
-const config = await getConfig()
-console.log(config)
+  const { license, fullname } = autogenValues;
+
+  console.log(`Generated License: ${license}`);
+  console.log(`Fullname: ${fullname}`);
+};
+
+if (name !== '') {
+  generateLicense();
+}

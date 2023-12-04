@@ -3,8 +3,7 @@ import input from '@inquirer/input';
 import confirm from '@inquirer/confirm';
 import pc from 'picocolors';
 import fs from 'fs';
-import { getConfig } from './src/config/config-mgr.js';
-import { start } from './src/commands/start.js';
+import { autogen } from './src/generate/gen.js';
 
 const URL = 'https://api.github.com/licenses';
 const entries = {};
@@ -58,22 +57,16 @@ const askOptions = async () => {
           },
         ],
       });
-
+// ---- autogen----
       if (answer === 'auto') {
         console.log(
           pc.bold(pc.blue('You selected Auto. Reading package.json...'))
         );
-        const config = await getConfig();
-        start(config);
-        entries.license = config.license.toLowerCase();
-        entries.fullname = config.fullname;
-        if (
-          entries.license === 'bsd-2-clause' ||
-          entries.license === 'bsd-3-clause' ||
-          entries.license === 'mit' ||
-          entries.license === 'isc'
-        )
-          flag = true;
+        const autogenValues = await autogen(entries, flag);
+        entries.license = autogenValues.license;
+        entries.fullname = autogenValues.fullname;
+        flag = autogenValues.flag;
+// ------ --------  -------        
       } else if (answer === 'custom') {
         const lcs = await select({
           message: 'Select license',
@@ -109,7 +102,9 @@ const askOptions = async () => {
           let dateAnswer;
           const dateRegex = /^\d{4}$/;
           do {
-            dateAnswer = await input({ message: 'Enter the year (leave it black to auto-generate):' });
+            dateAnswer = await input({
+              message: 'Enter the year (leave it black to auto-generate):',
+            });
             if (!dateRegex.test(dateAnswer) && dateAnswer.trim() !== '') {
               console.log(
                 'Invalid date. Please enter a valid date in YYYY format (leave it blank): '
