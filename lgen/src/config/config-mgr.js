@@ -40,7 +40,7 @@ export async function getConfig() {
       console.log(betterAjvErrors(schema, `${lsc.config} ${auth.config}`, ajv.errors));
       process.exit(1);
     }
-    logger.highlight(`Found\n  license: ${lsc.config} and author: ${auth.config}`);
-    return lsc.config;
+    logger.highlight(`\nConfiguration found!`);
+    return { license: lsc.config, fullname: auth.config }
   }
 }

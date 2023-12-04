@@ -3,12 +3,18 @@ import input from '@inquirer/input';
 import confirm from '@inquirer/confirm';
 import pc from 'picocolors';
 import fs from 'fs';
+import { getConfig } from './src/config/config-mgr.js';
+import { start } from './src/commands/start.js';
 
 const URL = 'https://api.github.com/licenses';
 const entries = {};
 const ghdata = [];
 let licenses = [];
 let isSuccess = false;
+var flag = false;
+const replacePlaceholders = (text, fullname, year) => {
+  return text.replace(/\[fullname\]/g, fullname).replace(/\[year\]/g, year);
+};
 
 const fetchData = async () => {
   try {
@@ -57,7 +63,17 @@ const askOptions = async () => {
         console.log(
           pc.bold(pc.blue('You selected Auto. Reading package.json...'))
         );
-        // Perform tasks related to the 'Auto' option
+        const config = await getConfig();
+        start(config);
+        entries.license = config.license.toLowerCase();
+        entries.fullname = config.fullname;
+        if (
+          entries.license === 'bsd-2-clause' ||
+          entries.license === 'bsd-3-clause' ||
+          entries.license === 'mit' ||
+          entries.license === 'isc'
+        )
+          flag = true;
       } else if (answer === 'custom') {
         const lcs = await select({
           message: 'Select license',
@@ -65,15 +81,23 @@ const askOptions = async () => {
         });
         entries.license = lcs;
 
-        if (lcs === 'BSD-2-Clause' || lcs === 'BSD-3-Clause' || lcs === 'MIT') {
+        if (
+          entries.license === 'bsd-2-clause' ||
+          entries.license === 'bsd-3-clause' ||
+          entries.license === 'mit' ||
+          entries.license === 'isc'
+        )
+          flag = true;
+
+        if (flag) {
           let nameAnswer;
           do {
-            nameAnswer = await input({ message: 'Enter your name' });
+            nameAnswer = await input({ message: 'Enter your name:' });
             if (
               typeof nameAnswer !== 'string' ||
               nameAnswer.trim().length < 1
             ) {
-              console.log('Invalid name. Please enter a valid name.');
+              console.log('Invalid name. Please enter a valid name!');
             }
           } while (
             typeof nameAnswer !== 'string' ||
@@ -85,23 +109,29 @@ const askOptions = async () => {
           let dateAnswer;
           const dateRegex = /^\d{4}$/;
           do {
-            dateAnswer = await input({ message: 'Enter the date' });
-            if (!dateRegex.test(dateAnswer)) {
+            dateAnswer = await input({ message: 'Enter the year (leave it black to auto-generate):' });
+            if (!dateRegex.test(dateAnswer) && dateAnswer.trim() !== '') {
               console.log(
-                'Invalid date. Please enter a valid date in YYYY format.'
+                'Invalid date. Please enter a valid date in YYYY format (leave it blank): '
               );
             }
-          } while (!dateRegex.test(dateAnswer));
-          entries.date = dateAnswer || new Date().getUTCFullYear();
+          } while (!dateRegex.test(dateAnswer) && dateAnswer.trim() !== '');
+
+          // If dateAnswer is empty, set entries.date to the current year
+          entries.date =
+            dateAnswer.trim() === '' ? new Date().getUTCFullYear() : dateAnswer;
         }
       }
 
-      console.log(`License: ${entries.license}\nName: ${entries.fullname}`);
+      flag
+        ? console.log(
+            `\nLicense: ${entries.license}\nName: ${entries.fullname}`
+          )
+        : console.log(`\nLicense: ${entries.license}`);
+
       const check = await confirm({ message: 'Continue?' });
       if (check) {
-        let fffx = `${URL}/${entries.license}`;
-        console.log(fffx);
-        fetch(fffx)
+        fetch(`${URL}/${entries.license}`)
           .then((response) => {
             if (!response.ok) {
               throw new Error(`HTTP error! Status: ${response.status}`);
@@ -109,11 +139,16 @@ const askOptions = async () => {
             return response.json();
           })
           .then((data) => {
-            fs.writeFile('LICENSE', data.body, (err) => {
+            const modifiedLicense = replacePlaceholders(
+              data.body,
+              entries.fullname,
+              entries.date || new Date().getUTCFullYear()
+            );
+            fs.writeFile('LICENSE', modifiedLicense, (err) => {
               if (err) {
                 console.error('Error writing to file:', err);
               } else {
-                console.log('Data has been written to');
+                console.log('LICENSE generated!');
               }
             });
           })
